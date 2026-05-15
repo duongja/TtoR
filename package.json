@@ -1,0 +1,48 @@
+{
+  "name": "trump-x-ingestor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "login": "tsx src/cli.ts login",
+    "backfill": "tsx src/cli.ts backfill",
+    "poll-once": "tsx src/cli.ts poll-once",
+    "worker": "tsx src/cli.ts worker",
+    "api": "tsx src/cli.ts api",
+    "serve": "tsx src/cli.ts serve",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "playwright": "^1.45.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "vitest": {
+    "test": {
+      "environment": "node",
+      "deps": {
+        "moduleDirectories": [
+          "node_modules"
+        ]
+      },
+      "server": {
+        "deps": {
+          "external": [
+            "node:sqlite",
+            "sqlite"
+          ]
+        }
+      }
+    }
+  }
+}

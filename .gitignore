@@ -1,0 +1,7 @@
+node_modules/
+dist/
+coverage/
+data/
+tmp-playwright-profile/
+.env
+.DS_Store
