@@ -87,7 +87,7 @@ function parseReasoningEffort(value: string | undefined): AppConfig["openaiReaso
 
 function parseDatabasePath(databaseUrl: string): string {
   if (!databaseUrl.startsWith("sqlite:")) {
-    throw new Error(`Unsupported DATABASE_URL "${databaseUrl}". Expected sqlite:...`);
+    return "./data/app.db";
   }
 
   return databaseUrl.slice("sqlite:".length) || "./data/app.db";
