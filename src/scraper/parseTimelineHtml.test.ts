@@ -11,15 +11,15 @@ describe("parseTimelineHtml", () => {
   it("parses a mixed timeline fixture into normalized posts", () => {
     const html = readFileSync(fixturePath, "utf8");
     const posts = parseTimelineHtml(html, {
-      expectedHandle: "realDonaldTrump",
+      expectedHandle: "polymarket",
       detectedAt: "2026-05-15T10:00:00.000Z"
     });
 
     expect(posts).toHaveLength(3);
     expect(posts[0]).toMatchObject({
       postId: "333333333333333333",
-      authorHandle: "realDonaldTrump",
-      text: "MAKE AMERICA SAFE AGAIN.",
+      authorHandle: "polymarket",
+      text: "Market update.",
       createdAt: "2026-05-15T10:00:00.000Z",
       media: []
     });
@@ -47,10 +47,10 @@ describe("parseTimelineHtml", () => {
           <section>
             <article data-testid="tweet">
               <div data-testid="User-Name">
-                <span>Donald J. Trump</span>
-                <span>@realDonaldTrump</span>
+                <span>Polymarket</span>
+                <span>@polymarket</span>
               </div>
-              <a href="/realDonaldTrump/status/111">one</a>
+              <a href="/polymarket/status/111">one</a>
               <time datetime="2026-05-15T09:58:00.000Z"></time>
               <div data-testid="tweetText" lang="en">First post</div>
               <img src="https://pbs.twimg.com/media/first.jpg" alt="first" />
@@ -59,10 +59,10 @@ describe("parseTimelineHtml", () => {
           <section>
             <article data-testid="tweet">
               <div data-testid="User-Name">
-                <span>Donald J. Trump</span>
-                <span>@realDonaldTrump</span>
+                <span>Polymarket</span>
+                <span>@polymarket</span>
               </div>
-              <a href="/realDonaldTrump/status/222">two</a>
+              <a href="/polymarket/status/222">two</a>
               <time datetime="2026-05-15T09:59:00.000Z"></time>
               <div data-testid="tweetText" lang="en">Second post</div>
               <img src="https://pbs.twimg.com/media/second.jpg" alt="second" />
@@ -74,7 +74,7 @@ describe("parseTimelineHtml", () => {
     `;
 
     const posts = parseTimelineHtml(html, {
-      expectedHandle: "realDonaldTrump",
+      expectedHandle: "polymarket",
       detectedAt: "2026-05-15T10:00:00.000Z"
     });
 

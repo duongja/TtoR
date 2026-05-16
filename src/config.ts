@@ -15,6 +15,13 @@ export interface AppConfig {
   apiHost: string;
   apiPort: number;
   browserChannel: "chrome" | "chromium";
+  cronSecret: string | null;
+  xAuthToken: string | null;
+  xCsrfToken: string | null;
+  xGuestToken: string | null;
+  xBearerToken: string | null;
+  xUserTweetsUrl: string | null;
+  xCookieHeader: string | null;
 }
 
 function parsePositiveInteger(value: string | undefined, fallback: number): number {
@@ -72,7 +79,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       : "info";
 
   return {
-    targetHandle: (env.X_TARGET_HANDLE ?? "realDonaldTrump").replace(/^@/, ""),
+    targetHandle: (env.X_TARGET_HANDLE ?? "polymarket").replace(/^@/, ""),
     pollIntervalSeconds: parsePositiveInteger(env.POLL_INTERVAL_SECONDS, 60),
     pollJitterSeconds: parsePositiveInteger(env.POLL_JITTER_SECONDS, 15),
     dataDir,
@@ -84,7 +91,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     logLevel,
     apiHost: env.API_HOST ?? "127.0.0.1",
     apiPort: parsePositiveInteger(env.API_PORT, 8787),
-    browserChannel
+    browserChannel,
+    cronSecret: env.CRON_SECRET ?? null,
+    xAuthToken: env.X_AUTH_TOKEN ?? null,
+    xCsrfToken: env.X_CSRF_TOKEN ?? env.X_CT0 ?? null,
+    xGuestToken: env.X_GUEST_TOKEN ?? null,
+    xBearerToken: env.X_BEARER_TOKEN ?? null,
+    xUserTweetsUrl: env.X_USER_TWEETS_URL ?? null,
+    xCookieHeader: env.X_COOKIE_HEADER ?? null
   };
 }
 

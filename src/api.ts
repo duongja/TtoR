@@ -2,7 +2,7 @@ import { createServer, type Server } from "node:http";
 
 import type { AppConfig } from "./config.js";
 import type { Logger } from "./logger.js";
-import { Repository } from "./storage.js";
+import type { PostRepository } from "./repository.js";
 
 function jsonResponse(statusCode: number, body: unknown): ResponseInit {
   return {
@@ -26,11 +26,34 @@ function send(response: import("node:http").ServerResponse, init: ResponseInit):
 }
 
 export function startApiServer(
-  repository: Repository,
+  repository: PostRepository,
   config: AppConfig,
   logger: Logger
 ): Promise<Server> {
   const server = createServer((request, response) => {
+    void handleApiRequest(repository, config, request, response);
+  });
+
+  return new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(config.apiPort, config.apiHost, () => {
+      logger.info("API server listening", {
+        host: config.apiHost,
+        port: config.apiPort
+      });
+      server.off("error", reject);
+      resolve(server);
+    });
+  });
+}
+
+async function handleApiRequest(
+  repository: PostRepository,
+  config: AppConfig,
+  request: import("node:http").IncomingMessage,
+  response: import("node:http").ServerResponse
+): Promise<void> {
+  try {
     if (!request.url || !request.method) {
       send(response, jsonResponse(400, { error: "Missing request URL" }));
       return;
@@ -44,12 +67,12 @@ export function startApiServer(
     }
 
     if (url.pathname === "/health") {
-      send(response, jsonResponse(200, repository.getHealthSnapshot(config)));
+      send(response, jsonResponse(200, await repository.getHealthSnapshot(config)));
       return;
     }
 
     if (url.pathname === "/posts/latest") {
-      const latestPost = repository.getLatestPost();
+      const latestPost = await repository.getLatestPost();
       if (!latestPost) {
         send(response, jsonResponse(404, { error: "No posts have been ingested yet" }));
         return;
@@ -81,25 +104,20 @@ export function startApiServer(
 
       const normalizedSince = new Date(parsedDate).toISOString();
       const posts = sinceCreatedAt
-        ? repository.getPostsSinceCreatedAt(normalizedSince)
-        : repository.getPostsSinceDetectedAt(normalizedSince);
+        ? await repository.getPostsSinceCreatedAt(normalizedSince)
+        : await repository.getPostsSinceDetectedAt(normalizedSince);
 
       send(response, jsonResponse(200, posts));
       return;
     }
 
     send(response, jsonResponse(404, { error: "Not found" }));
-  });
-
-  return new Promise((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(config.apiPort, config.apiHost, () => {
-      logger.info("API server listening", {
-        host: config.apiHost,
-        port: config.apiPort
-      });
-      server.off("error", reject);
-      resolve(server);
-    });
-  });
+  } catch (error) {
+    send(
+      response,
+      jsonResponse(500, {
+        error: error instanceof Error ? error.message : "Internal server error"
+      })
+    );
+  }
 }

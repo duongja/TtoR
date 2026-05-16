@@ -1,7 +1,7 @@
 import type { AppConfig } from "./config.js";
 import { classifyError } from "./errors.js";
 import type { Logger } from "./logger.js";
-import { Repository } from "./storage.js";
+import type { PostRepository } from "./repository.js";
 import type { PollCycleSummary, TimelineScraper } from "./types.js";
 
 function sleep(ms: number): Promise<void> {
@@ -30,7 +30,7 @@ export class PollingWorker {
 
   public constructor(
     private readonly config: AppConfig,
-    private readonly repository: Repository,
+    private readonly repository: PostRepository,
     private readonly scraper: TimelineScraper,
     private readonly logger: Logger,
     private readonly now: () => Date = () => new Date(),
@@ -51,7 +51,7 @@ export class PollingWorker {
       const finishedAt = this.now().toISOString();
 
       if (result.loginExpired) {
-        this.repository.recordPollRun({
+        await this.repository.recordPollRun({
           startedAt,
           finishedAt,
           status: "error",
@@ -72,12 +72,12 @@ export class PollingWorker {
           finishedAt,
           status: "error",
           newPostsCount: 0,
-          latestPostId: this.repository.getLatestPost()?.postId ?? null,
+          latestPostId: (await this.repository.getLatestPost())?.postId ?? null,
           errorCode: "LOGIN_REQUIRED"
         };
       }
 
-      const saved = this.repository.recordPollRun({
+      const saved = await this.repository.recordPollRun({
         startedAt,
         finishedAt,
         status: "success",
@@ -108,7 +108,7 @@ export class PollingWorker {
       const finishedAt = this.now().toISOString();
       const classified = classifyError(error);
 
-      this.repository.recordPollRun({
+      await this.repository.recordPollRun({
         startedAt,
         finishedAt,
         status: "error",
@@ -128,7 +128,7 @@ export class PollingWorker {
         finishedAt,
         status: "error",
         newPostsCount: 0,
-        latestPostId: this.repository.getLatestPost()?.postId ?? null,
+        latestPostId: (await this.repository.getLatestPost())?.postId ?? null,
         errorCode: classified.code
       };
     } finally {

@@ -60,7 +60,7 @@ async function runPollOnceCommand(): Promise<void> {
     console.log(JSON.stringify(summary, null, 2));
   } finally {
     await scraper.close();
-    repository.close();
+    await repository.close();
   }
 }
 
@@ -90,7 +90,7 @@ async function runBackfillCommand(): Promise<void> {
       since
     });
     const finishedAt = new Date().toISOString();
-    const saved = repository.recordPollRun({
+    const saved = await repository.recordPollRun({
       startedAt,
       finishedAt,
       status: "success",
@@ -130,7 +130,7 @@ async function runBackfillCommand(): Promise<void> {
     );
   } finally {
     await scraper.close();
-    repository.close();
+    await repository.close();
   }
 }
 
@@ -148,7 +148,7 @@ async function runWorkerCommand(withApi: boolean): Promise<void> {
     worker.stop();
     apiServer?.close();
     await scraper.close();
-    repository.close();
+    await repository.close();
   };
 
   process.once("SIGINT", () => {
@@ -175,7 +175,7 @@ async function runApiCommand(): Promise<void> {
   const shutdown = (): void => {
     logger.info("Stopping API server");
     server.close();
-    repository.close();
+    void repository.close();
   };
 
   process.once("SIGINT", shutdown);

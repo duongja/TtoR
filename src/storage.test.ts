@@ -6,8 +6,8 @@ import type { NormalizedPost } from "./types.js";
 function createPost(postId: string, detectedAt: string): NormalizedPost {
   return {
     postId,
-    authorHandle: "realDonaldTrump",
-    authorDisplayName: "Donald J. Trump",
+    authorHandle: "polymarket",
+    authorDisplayName: "Polymarket",
     createdAt: detectedAt,
     detectedAt,
     text: `Post ${postId}`,

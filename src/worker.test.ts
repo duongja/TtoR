@@ -15,7 +15,7 @@ const silentLogger: Logger = {
 
 function buildConfig(): AppConfig {
   return {
-    targetHandle: "realDonaldTrump",
+    targetHandle: "polymarket",
     pollIntervalSeconds: 60,
     pollJitterSeconds: 15,
     dataDir: "/tmp/data",
@@ -27,7 +27,14 @@ function buildConfig(): AppConfig {
     logLevel: "info",
     apiHost: "127.0.0.1",
     apiPort: 8787,
-    browserChannel: "chrome"
+    browserChannel: "chrome",
+    cronSecret: null,
+    xAuthToken: null,
+    xCsrfToken: null,
+    xGuestToken: null,
+    xBearerToken: null,
+    xUserTweetsUrl: null,
+    xCookieHeader: null
   };
 }
 
@@ -53,8 +60,8 @@ describe("PollingWorker", () => {
       posts: [
         {
           postId: "10",
-          authorHandle: "realDonaldTrump",
-          authorDisplayName: "Donald J. Trump",
+          authorHandle: "polymarket",
+          authorDisplayName: "Polymarket",
           createdAt: "2026-05-15T10:00:00.000Z",
           detectedAt: "2026-05-15T10:00:05.000Z",
           text: "Test",
@@ -69,7 +76,7 @@ describe("PollingWorker", () => {
       ],
       loginExpired: false,
       extractedAt: "2026-05-15T10:00:05.000Z",
-      sourceUrl: "https://x.com/realDonaldTrump",
+      sourceUrl: "https://x.com/polymarket",
       rawHtml: "<html></html>",
       artifactPaths: []
     });
@@ -106,7 +113,7 @@ describe("PollingWorker", () => {
       posts: [],
       loginExpired: true,
       extractedAt: "2026-05-15T10:00:05.000Z",
-      sourceUrl: "https://x.com/realDonaldTrump",
+      sourceUrl: "https://x.com/polymarket",
       rawHtml: "<html></html>",
       artifactPaths: ["/tmp/login.html"]
     });
@@ -130,7 +137,9 @@ describe("PollingWorker", () => {
       errorCode: "LOGIN_REQUIRED"
     });
     expect(repository.getLatestPoll()?.errorCode).toBe("LOGIN_REQUIRED");
-    expect(repository.getHealthSnapshot(config).status).toBe("unhealthy");
+    await expect(repository.getHealthSnapshot(config)).resolves.toMatchObject({
+      status: "unhealthy"
+    });
 
     repository.close();
   });

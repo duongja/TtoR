@@ -4,4 +4,5 @@ coverage/
 data/
 tmp-playwright-profile/
 .env
+.vercel/
 .DS_Store

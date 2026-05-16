@@ -1,9 +1,9 @@
 import { createRequire } from "node:module";
 
-import { computeHealthStatus } from "./health.js";
 import type {
   AppConfig
 } from "./config.js";
+import { getRepositoryHealthSnapshot, type PostRepository } from "./repository.js";
 import type {
   HealthSnapshot,
   NormalizedPost,
@@ -56,7 +56,7 @@ function rowToPollRun(row: Record<string, unknown>): PollRunRecord {
   };
 }
 
-export class Repository {
+export class Repository implements PostRepository {
   private readonly insertPostStatement;
   private readonly insertPollRunStatement;
   private readonly latestPostStatement;
@@ -268,13 +268,7 @@ export class Repository {
     return row ? rowToPollRun(row) : null;
   }
 
-  public getHealthSnapshot(config: Pick<AppConfig, "targetHandle">, now = new Date()): HealthSnapshot {
-    return computeHealthStatus({
-      targetHandle: config.targetHandle,
-      latestPostId: this.getLatestPost()?.postId ?? null,
-      latestPoll: this.getLatestPoll(),
-      latestSuccessfulPoll: this.getLatestSuccessfulPoll(),
-      now
-    });
+  public async getHealthSnapshot(config: Pick<AppConfig, "targetHandle">, now = new Date()): Promise<HealthSnapshot> {
+    return getRepositoryHealthSnapshot(this, config, now);
   }
 }

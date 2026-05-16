@@ -10,8 +10,8 @@ function tweetResult(id: string, fullText: string, mediaType = "photo") {
       user_results: {
         result: {
           core: {
-            name: "Donald J. Trump",
-            screen_name: "realDonaldTrump"
+            name: "Polymarket",
+            screen_name: "polymarket"
           }
         }
       }
@@ -98,15 +98,15 @@ describe("parseUserTweetsResponse", () => {
     };
 
     const posts = parseUserTweetsResponse(payload, {
-      expectedHandle: "realDonaldTrump",
+      expectedHandle: "polymarket",
       detectedAt: "2026-05-15T13:00:00.000Z"
     });
 
     expect(posts).toHaveLength(2);
     expect(posts[0]).toMatchObject({
       postId: "2028505632123326484",
-      authorHandle: "realDonaldTrump",
-      authorDisplayName: "Donald J. Trump",
+      authorHandle: "polymarket",
+      authorDisplayName: "Polymarket",
       text: "https://t.co/uAxTGrJisv",
       lang: "en",
       media: [
@@ -134,7 +134,7 @@ describe("parseUserTweetsResponse", () => {
   });
 
   it("ignores tweets from other handles", () => {
-    const other = tweetResult("1", "Not Trump");
+    const other = tweetResult("1", "Not Polymarket");
     other.core.user_results.result.core.screen_name = "someoneElse";
 
     expect(
@@ -153,7 +153,7 @@ describe("parseUserTweetsResponse", () => {
           }
         },
         {
-          expectedHandle: "realDonaldTrump"
+          expectedHandle: "polymarket"
         }
       )
     ).toHaveLength(0);
@@ -188,7 +188,7 @@ describe("parseUserTweetsResponse", () => {
 
     expect(
       parseUserTweetsResponse(payload, {
-        expectedHandle: "realDonaldTrump"
+        expectedHandle: "polymarket"
       })
     ).toMatchObject([
       {
