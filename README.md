@@ -155,6 +155,56 @@ Manual poll test after deployment:
 curl -H "Authorization: Bearer $CRON_SECRET" https://<project>.vercel.app/api/cron/poll
 ```
 
+## Telegram Solana Buy Bot
+
+The optional Telegram trading layer is independent from the signal monitor. It only buys tokens explicitly supplied by the authorized Telegram user; it does not auto-buy from AI signals.
+
+V1 supports exact-input Solana buys with a confirmation step:
+
+```text
+/buy <token_mint> <amount> <SOL|USDC|USDT>
+/confirm <trade_id>
+/cancel <trade_id>
+/balance
+/help
+```
+
+Required env vars:
+
+```bash
+TRADING_ENABLED=true
+TELEGRAM_BOT_TOKEN=<telegram bot token>
+TELEGRAM_WEBHOOK_SECRET=<random webhook secret>
+TELEGRAM_ALLOWED_USER_IDS=<your numeric Telegram user id>
+PUBLIC_BASE_URL=https://<project>.vercel.app
+POSTGRES_URL=postgres://...
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+SOLANA_WALLET_SECRET_KEY=<base58 secret key or JSON number array>
+JUPITER_API_KEY=<jupiter api key>
+```
+
+Recommended safety env vars:
+
+```bash
+DEFAULT_SLIPPAGE_BPS=500
+MAX_SLIPPAGE_BPS=1000
+MAX_PRICE_IMPACT_PCT=15
+MIN_SOL_FEE_BALANCE=0.005
+MIN_SOL_RESERVE=0.02
+MAX_BUY_SOL=1
+MAX_BUY_USDC=500
+MAX_BUY_USDT=500
+TRADE_INTENT_TTL_SECONDS=60
+```
+
+Set the Telegram webhook after deployment:
+
+```bash
+npm run telegram:set-webhook
+```
+
+Use a limited-balance hot wallet only. Do not use a primary wallet private key.
+
 ## Runtime data
 
 The service stores runtime state under `./data/`:
