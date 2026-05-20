@@ -6,6 +6,7 @@ import type {
   DexRugpullTrend,
   DexTokenCandidateRecord
 } from "../types.js";
+import type { FreeTokenSecurityCheckResult } from "./freeSecurityChecks.js";
 
 type CandidateRiskView = Pick<
   DexTokenCandidateRecord,
@@ -23,6 +24,7 @@ type CandidateRiskView = Pick<
   | "previousLiquidityUsd"
   | "rugpullScore"
   | "lastRugCheckedAt"
+  | "rawPayload"
 >;
 
 function ratio(numerator: number | null, denominator: number | null): number | null {
@@ -91,11 +93,31 @@ function scoreToTrend(score: number, previousScore: number | null): DexRugpullTr
   return "stable";
 }
 
+function rawNestedNumber(rawPayload: Record<string, unknown>, path: string[]): number | null {
+  let current: unknown = rawPayload;
+  for (const key of path) {
+    if (!current || typeof current !== "object") {
+      return null;
+    }
+    current = (current as Record<string, unknown>)[key];
+  }
+
+  if (typeof current === "number" && Number.isFinite(current)) {
+    return current;
+  }
+  if (typeof current === "string") {
+    const parsed = Number.parseFloat(current);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 export function scoreDexRugpullRisk(
   candidate: CandidateRiskView,
-  now: Date
+  now: Date,
+  freeSecurityChecks: FreeTokenSecurityCheckResult | null = null
 ): DexRugpullRiskInput {
-  const details: DexRugpullDetail[] = [];
+  const details: DexRugpullDetail[] = [...(freeSecurityChecks?.findings.map((finding) => finding.detail) ?? [])];
   const liquidityUsd = candidate.liquidityUsd;
   const volume24hUsd = candidate.volume24hUsd;
   const fdv = candidate.fdv;
@@ -132,6 +154,19 @@ export function scoreDexRugpullRisk(
 
   if (percentDrop(candidate.priceUsd, candidate.previousPriceUsd) > 0.5) {
     details.push(detail("price_collapse", "high", 20, "Price dropped more than 50% since the previous check."));
+  }
+
+  const priceChangeH1 = rawNestedNumber(candidate.rawPayload, ["priceChange", "h1"]);
+  const buysH1 = rawNestedNumber(candidate.rawPayload, ["txns", "h1", "buys"]);
+  const sellsH1 = rawNestedNumber(candidate.rawPayload, ["txns", "h1", "sells"]);
+  if (priceChangeH1 !== null && priceChangeH1 <= -60) {
+    details.push(detail("dex_price_crash", "high", 20, "DexScreener reports a price drop over 60% in the last hour."));
+  }
+  if (buysH1 !== null && sellsH1 !== null && buysH1 >= 10 && sellsH1 / Math.max(1, buysH1) >= 4) {
+    details.push(detail("sell_buy_imbalance", "high", 15, "Recent sell transactions are more than 4x buys."));
+  }
+  if (buysH1 !== null && sellsH1 !== null && sellsH1 >= 10 && buysH1 / Math.max(1, sellsH1) >= 8) {
+    details.push(detail("buy_sell_imbalance", "medium", 10, "Recent buy transactions are far above sells, which may indicate one-sided trading."));
   }
 
   if (candidate.riskFlags.includes("missing_socials")) {
@@ -175,7 +210,13 @@ export function scoreDexRugpullRisk(
       priceUsd: candidate.priceUsd,
       previousPriceUsd: candidate.previousPriceUsd,
       pairCreatedAt: candidate.pairCreatedAt,
-      riskFlags: candidate.riskFlags
+      riskFlags: candidate.riskFlags,
+      dexScreener: {
+        priceChangeH1,
+        buysH1,
+        sellsH1
+      },
+      freeSecurityChecks: freeSecurityChecks?.rawPayload ?? null
     },
     checkedAt
   };

@@ -56,6 +56,7 @@ function buildConfig(): AppConfig {
     dexCandidateRefreshLimit: 100,
     dexRugCheckTtlMinutes: 10,
     dexRugCheckLimit: 100,
+    solanaRpcUrl: "https://api.mainnet-beta.solana.com",
     dexDiscoveryMinLiquidityUsd: 5000,
     dexDiscoveryMinVolume24hUsd: 1000,
     dexScreenerBaseUrl: "https://api.dexscreener.com"

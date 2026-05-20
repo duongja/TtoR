@@ -138,11 +138,18 @@ export type DexRugpullFlag =
   | "extreme_volume_liquidity"
   | "high_volume_liquidity"
   | "price_collapse"
+  | "dex_price_crash"
+  | "sell_buy_imbalance"
+  | "buy_sell_imbalance"
   | "missing_socials"
   | "duplicate_symbol"
   | "very_new_pair"
   | "new_pair"
-  | "high_fdv_low_liquidity";
+  | "high_fdv_low_liquidity"
+  | "mint_authority_enabled"
+  | "freeze_authority_enabled"
+  | "top_holder_concentration"
+  | "top10_holder_concentration";
 
 export interface DexRugpullDetail {
   flag: DexRugpullFlag;

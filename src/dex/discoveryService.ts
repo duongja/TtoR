@@ -11,6 +11,7 @@ import type { DexScreenerClient, DexScreenerPair } from "./dexScreenerClient.js"
 import { buildDexTokenCandidate, normalizeDexPairs, scoreDexTokenPriority } from "./scoring.js";
 import { buildDexDiscoveryQueryTerms } from "./queryTerms.js";
 import { scoreDexRugpullRisk } from "./rugpullScoring.js";
+import type { FreeTokenSecurityChecker } from "./freeSecurityChecks.js";
 
 export interface DexDiscoveryRunSummary {
   analyzedSignalCount: number;
@@ -78,6 +79,7 @@ export class DexDiscoveryService {
     private readonly repository: PostRepository,
     private readonly dexScreener: DexScreenerClient,
     private readonly logger: Logger,
+    private readonly freeSecurityChecker: FreeTokenSecurityChecker | null = null,
     private readonly now: () => Date = () => new Date()
   ) {}
 
@@ -289,7 +291,8 @@ export class DexDiscoveryService {
 
     for (const candidate of candidates) {
       try {
-        const risk = scoreDexRugpullRisk(candidate, this.now());
+        const freeSecurityChecks = this.freeSecurityChecker ? await this.freeSecurityChecker.check(candidate) : null;
+        const risk = scoreDexRugpullRisk(candidate, this.now(), freeSecurityChecks);
         await this.repository.saveDexRugpullRisk(risk);
         rugCheckedCandidateCount += 1;
         if (risk.rugpullScore >= 50) {

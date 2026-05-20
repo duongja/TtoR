@@ -116,4 +116,54 @@ describe("scoreDexRugpullRisk", () => {
     expect(risk.rugpullTrend).toBe("improving");
     expect(risk.rugpullLevel).toBe("low");
   });
+
+  it("includes free security findings and DexScreener transaction anomalies", () => {
+    const risk = scoreDexRugpullRisk(
+      candidate({
+        rawPayload: {
+          priceChange: {
+            h1: -70
+          },
+          txns: {
+            h1: {
+              buys: 10,
+              sells: 50
+            }
+          }
+        }
+      }),
+      now,
+      {
+        findings: [
+          {
+            detail: {
+              flag: "mint_authority_enabled",
+              severity: "critical",
+              points: 30,
+              description: "Mint authority is still enabled."
+            },
+            rawPayload: {
+              mintAuthority: "authority"
+            }
+          }
+        ],
+        rawPayload: {
+          SolanaFreeTokenSecurityChecker: {
+            mintAuthority: "authority"
+          }
+        }
+      }
+    );
+
+    expect(risk.rugpullFlags).toEqual(expect.arrayContaining([
+      "mint_authority_enabled",
+      "dex_price_crash",
+      "sell_buy_imbalance"
+    ]));
+    expect(risk.rawPayload.freeSecurityChecks).toMatchObject({
+      SolanaFreeTokenSecurityChecker: {
+        mintAuthority: "authority"
+      }
+    });
+  });
 });

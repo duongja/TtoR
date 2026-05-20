@@ -42,6 +42,7 @@ export interface AppConfig {
   dexCandidateRefreshLimit: number;
   dexRugCheckTtlMinutes: number;
   dexRugCheckLimit: number;
+  solanaRpcUrl: string;
   dexDiscoveryMinLiquidityUsd: number;
   dexDiscoveryMinVolume24hUsd: number;
   dexScreenerBaseUrl: string;
@@ -179,6 +180,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     dexCandidateRefreshLimit: clampInteger(parsePositiveInteger(env.DEX_CANDIDATE_REFRESH_LIMIT, 100), 1, 500),
     dexRugCheckTtlMinutes: clampInteger(parsePositiveInteger(env.DEX_RUG_CHECK_TTL_MINUTES, 10), 1, 1440),
     dexRugCheckLimit: clampInteger(parsePositiveInteger(env.DEX_RUG_CHECK_LIMIT, 100), 1, 500),
+    solanaRpcUrl: env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com",
     dexDiscoveryMinLiquidityUsd: parseNonNegativeNumber(env.DEX_DISCOVERY_MIN_LIQUIDITY_USD, 5000),
     dexDiscoveryMinVolume24hUsd: parseNonNegativeNumber(env.DEX_DISCOVERY_MIN_VOLUME_24H_USD, 1000),
     dexScreenerBaseUrl: env.DEXSCREENER_BASE_URL ?? "https://api.dexscreener.com"

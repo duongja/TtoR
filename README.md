@@ -142,7 +142,7 @@ Run locally:
 npm run dex-discovery
 ```
 
-Each run refreshes stale known pairs by exact DexScreener pair address, recalculates no-key rug-risk scores for stale candidates, and re-searches stale narrative signals after `DEX_DISCOVERY_CACHE_TTL_MINUTES`, so later launches can be picked up. Tokens with growing price, volume, liquidity, or already strong market activity receive priority reasons shown in the dashboard; tokens with liquidity, FDV/liquidity, volume/liquidity, price-collapse, metadata, or age red flags receive rug-risk scores and details.
+Each run refreshes stale known pairs by exact DexScreener pair address, recalculates no-key rug-risk scores for stale candidates, and re-searches stale narrative signals after `DEX_DISCOVERY_CACHE_TTL_MINUTES`, so later launches can be picked up. Tokens with growing price, volume, liquidity, or already strong market activity receive priority reasons shown in the dashboard; tokens with liquidity, FDV/liquidity, volume/liquidity, price-collapse, DexScreener transaction imbalance, metadata, or age red flags receive rug-risk scores and details. Solana tokens also get free public-RPC checks for mint authority, freeze authority, and top-holder concentration when `SOLANA_RPC_URL` is reachable.
 
 On Vercel, `/api/cron/dex-discovery` is scheduled in `vercel.json` every 10 minutes. External schedulers can call the same path with the `Authorization: Bearer <CRON_SECRET>` header.
 

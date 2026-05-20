@@ -3,6 +3,7 @@ import { MemeSignalService } from "./ai/memeSignalService.js";
 import { OpenAIMemeSignalAnalyzer } from "./ai/memeSignalAnalyzer.js";
 import { DexDiscoveryService } from "./dex/discoveryService.js";
 import { HttpDexScreenerClient } from "./dex/dexScreenerClient.js";
+import { CompositeFreeTokenSecurityChecker, SolanaFreeTokenSecurityChecker } from "./dex/freeSecurityChecks.js";
 import { createLogger } from "./logger.js";
 import { PostgresRepository } from "./postgresRepository.js";
 import type { PostRepository } from "./repository.js";
@@ -82,7 +83,10 @@ export function createDexDiscoveryService(
     config,
     repository,
     new HttpDexScreenerClient(config.dexScreenerBaseUrl),
-    logger
+    logger,
+    new CompositeFreeTokenSecurityChecker([
+      new SolanaFreeTokenSecurityChecker(config.solanaRpcUrl)
+    ])
   );
 }
 

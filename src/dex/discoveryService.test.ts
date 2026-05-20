@@ -3,9 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import type { AppConfig } from "../config.js";
 import type { Logger } from "../logger.js";
 import { Repository } from "../storage.js";
-import type { MemeSignalAnalysisPayload, NormalizedPost } from "../types.js";
+import type { DexRugpullFlag, DexRugpullLevel, MemeSignalAnalysisPayload, NormalizedPost } from "../types.js";
 import type { DexScreenerClient } from "./dexScreenerClient.js";
 import { DexDiscoveryService } from "./discoveryService.js";
+import type { FreeTokenSecurityChecker } from "./freeSecurityChecks.js";
 
 const silentLogger: Logger = {
   debug: () => undefined,
@@ -124,6 +125,7 @@ describe("DexDiscoveryService", () => {
       repository,
       client,
       silentLogger,
+      null,
       () => new Date("2026-05-15T10:00:10.000Z")
     );
 
@@ -249,6 +251,7 @@ describe("DexDiscoveryService", () => {
       repository,
       client,
       silentLogger,
+      null,
       () => new Date("2026-05-15T10:20:10.000Z")
     );
 
@@ -329,6 +332,26 @@ describe("DexDiscoveryService", () => {
       searchPairs: vi.fn(async () => []),
       getPairsByChainAndAddresses: vi.fn(async () => [])
     };
+    const freeSecurityChecker: FreeTokenSecurityChecker = {
+      check: vi.fn(async () => ({
+        findings: [
+          {
+            detail: {
+              flag: "mint_authority_enabled" as DexRugpullFlag,
+              severity: "critical" as DexRugpullLevel,
+              points: 30,
+              description: "Solana mint authority is still enabled."
+            },
+            rawPayload: {
+              mintAuthority: "authority"
+            }
+          }
+        ],
+        rawPayload: {
+          mintAuthority: "authority"
+        }
+      }))
+    };
     const service = new DexDiscoveryService(
       {
         ...config,
@@ -339,6 +362,7 @@ describe("DexDiscoveryService", () => {
       repository,
       client,
       silentLogger,
+      freeSecurityChecker,
       () => new Date("2026-05-15T10:20:10.000Z")
     );
 
@@ -353,9 +377,10 @@ describe("DexDiscoveryService", () => {
       {
         pairAddress: "pair-risk",
         rugpullLevel: "critical",
-        rugpullFlags: expect.arrayContaining(["critical_liquidity", "extreme_fdv_liquidity", "extreme_volume_liquidity"])
+        rugpullFlags: expect.arrayContaining(["mint_authority_enabled", "critical_liquidity", "extreme_fdv_liquidity", "extreme_volume_liquidity"])
       }
     ]);
+    expect(freeSecurityChecker.check).toHaveBeenCalledTimes(1);
 
     repository.close();
   });
