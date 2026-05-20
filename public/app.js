@@ -27,9 +27,25 @@ const elements = {
   analysesList: document.querySelector("#analysesList")
 };
 
+const sectionTabs = [...document.querySelectorAll(".section-tab")];
+const tabPanels = [...document.querySelectorAll(".tab-panel")];
 const emptyTemplate = document.querySelector("#emptyTemplate");
 let refreshTimer = null;
 let isRefreshing = false;
+
+function activateTab(panelId) {
+  for (const tab of sectionTabs) {
+    const isActive = tab.dataset.tabTarget === panelId;
+    tab.classList.toggle("active", isActive);
+    tab.setAttribute("aria-selected", String(isActive));
+  }
+
+  for (const panel of tabPanels) {
+    const isActive = panel.id === panelId;
+    panel.classList.toggle("active", isActive);
+    panel.hidden = !isActive;
+  }
+}
 
 function api(path) {
   return fetch(path, { cache: "no-store" }).then(async (response) => {
@@ -664,6 +680,9 @@ refreshButton.addEventListener("click", refresh);
 autoRefreshToggle.addEventListener("change", scheduleAutoRefresh);
 minScoreInput.addEventListener("change", refresh);
 statusFilter.addEventListener("change", refresh);
+for (const tab of sectionTabs) {
+  tab.addEventListener("click", () => activateTab(tab.dataset.tabTarget));
+}
 
 scheduleAutoRefresh();
 void refresh();

@@ -101,38 +101,76 @@
           </p>
         </section>
 
-        <section class="panel wide">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">Ranked signals</p>
-              <h2>Memecoin search candidates</h2>
-            </div>
-            <span id="signalsState" class="state-pill">Loading</span>
+        <div class="tab-shell wide">
+          <div class="section-tabs" role="tablist" aria-label="Dashboard result sections">
+            <button
+              id="signalsTab"
+              class="section-tab active"
+              type="button"
+              role="tab"
+              aria-selected="true"
+              aria-controls="signalsPanel"
+              data-tab-target="signalsPanel"
+            >
+              Ranked signals
+            </button>
+            <button
+              id="dexTab"
+              class="section-tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="dexPanel"
+              data-tab-target="dexPanel"
+            >
+              DEX discovery
+            </button>
+            <button
+              id="analysesTab"
+              class="section-tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="analysesPanel"
+              data-tab-target="analysesPanel"
+            >
+              AI stream
+            </button>
           </div>
-          <div id="signalsList" class="card-list"></div>
-        </section>
 
-        <section class="panel wide">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">DEX discovery</p>
-              <h2>Existing token matches</h2>
+          <section id="signalsPanel" class="panel tab-panel active" role="tabpanel" aria-labelledby="signalsTab">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Ranked signals</p>
+                <h2>Memecoin search candidates</h2>
+              </div>
+              <span id="signalsState" class="state-pill">Loading</span>
             </div>
-            <span id="dexState" class="state-pill">Loading</span>
-          </div>
-          <div id="dexList" class="card-list"></div>
-        </section>
+            <div id="signalsList" class="card-list"></div>
+          </section>
 
-        <section class="panel wide">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">AI stream</p>
-              <h2>Latest analyses</h2>
+          <section id="dexPanel" class="panel tab-panel" role="tabpanel" aria-labelledby="dexTab" hidden>
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">DEX discovery</p>
+                <h2>Existing token matches</h2>
+              </div>
+              <span id="dexState" class="state-pill">Loading</span>
             </div>
-            <span id="analysesState" class="state-pill">Loading</span>
-          </div>
-          <div id="analysesList" class="table-list"></div>
-        </section>
+            <div id="dexList" class="card-list"></div>
+          </section>
+
+          <section id="analysesPanel" class="panel tab-panel" role="tabpanel" aria-labelledby="analysesTab" hidden>
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">AI stream</p>
+                <h2>Latest analyses</h2>
+              </div>
+              <span id="analysesState" class="state-pill">Loading</span>
+            </div>
+            <div id="analysesList" class="table-list"></div>
+          </section>
+        </div>
       </main>
     </div>
 
