@@ -536,13 +536,32 @@ function renderDexDiscoveries(candidates, signals) {
   );
 }
 
-async function loadDexDiscoveries(signals, minScore) {
-  const stored = await api(`/api/dex-discoveries?min_score=${minScore}&limit=100`).catch(() => []);
-  if (Array.isArray(stored) && stored.length > 0) {
-    return stored;
+async function loadDexDiscoveries(signals) {
+  const [stored, fallback] = await Promise.all([
+    api("/api/dex-discoveries?min_score=0&limit=100").catch(() => []),
+    discoverDexFromSignals(signals)
+  ]);
+  const candidates = new Map();
+
+  for (const candidate of Array.isArray(stored) ? stored : []) {
+    candidates.set(`${candidate.chainId ?? "unknown"}:${candidate.pairAddress ?? candidate.url ?? ""}`, candidate);
   }
 
-  return discoverDexFromSignals(signals);
+  for (const candidate of fallback) {
+    const key = `${candidate.chainId ?? "unknown"}:${candidate.pairAddress ?? candidate.url ?? ""}`;
+    if (!candidates.has(key)) {
+      candidates.set(key, candidate);
+    }
+  }
+
+  return [...candidates.values()]
+    .sort(
+      (left, right) =>
+        (right.priorityScore ?? 0) - (left.priorityScore ?? 0) ||
+        right.matchScore - left.matchScore ||
+        (right.liquidityUsd ?? 0) - (left.liquidityUsd ?? 0)
+    )
+    .slice(0, 100);
 }
 
 function renderAnalyses(analyses) {
@@ -607,7 +626,7 @@ async function refresh() {
       api(`/api/meme-signals?min_score=${minScore}&limit=20`),
       api(`/api/meme-analyses?limit=25${status}`)
     ]);
-    const dexDiscoveries = await loadDexDiscoveries(signals, minScore);
+    const dexDiscoveries = await loadDexDiscoveries(signals);
 
     let latestAnalysis = null;
     if (latestPost?.postId) {
