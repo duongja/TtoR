@@ -176,13 +176,16 @@ function pairMatchesTerm(pair, term) {
 function buildDexFallbackQueries(signals) {
   const queries = [];
   const seen = new Set();
+  const maxSignals = 5;
+  const maxQueriesPerSignal = 3;
 
-  for (const signal of signals.slice(0, 4)) {
+  for (const signal of signals.slice(0, maxSignals)) {
     const terms = [
       ...(signal.searchTerms ?? []),
       ...(signal.possibleNames ?? []).flatMap((name) => [name.ticker, name.name]),
       ...(signal.entities ?? [])
     ];
+    let signalQueryCount = 0;
 
     for (const term of terms) {
       const normalized = normalizeTerm(term);
@@ -197,8 +200,9 @@ function buildDexFallbackQueries(signals) {
         whySignal: signal.whySignal,
         query: normalized
       });
-      if (queries.length >= 8) {
-        return queries;
+      signalQueryCount += 1;
+      if (signalQueryCount >= maxQueriesPerSignal) {
+        break;
       }
     }
   }
@@ -277,6 +281,34 @@ async function discoverDexFromSignals(signals) {
     .slice(0, 20);
 }
 
+function groupDexDiscoveriesByNews(candidates, signals) {
+  const signalByPostId = new Map(signals.map((signal) => [signal.postId, signal]));
+  const groups = new Map();
+
+  for (const candidate of candidates) {
+    const signal = signalByPostId.get(candidate.postId);
+    const group = groups.get(candidate.postId) ?? {
+      postId: candidate.postId,
+      signalScore: signal?.signalScore ?? candidate.signalScore ?? null,
+      title: signal?.possibleNames?.[0]?.name ?? signal?.narrative ?? candidate.narrative ?? shortId(candidate.postId),
+      narrative: signal?.whySignal || signal?.narrative || candidate.whySignal || candidate.narrative || "Matched from a stored narrative signal.",
+      candidates: []
+    };
+
+    group.candidates.push(candidate);
+    groups.set(candidate.postId, group);
+  }
+
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      candidates: group.candidates.sort(
+        (left, right) => right.matchScore - left.matchScore || (right.liquidityUsd ?? 0) - (left.liquidityUsd ?? 0)
+      )
+    }))
+    .sort((left, right) => (right.signalScore ?? 0) - (left.signalScore ?? 0) || right.candidates.length - left.candidates.length);
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -351,9 +383,39 @@ function renderSignals(signals) {
   );
 }
 
-function renderDexDiscoveries(candidates) {
+function renderDexCoinCard(candidate) {
+  const card = document.createElement("article");
+  card.className = "coin-card";
+  const symbol = candidate.baseTokenSymbol ? `$${candidate.baseTokenSymbol}` : "";
+  const title = `${candidate.baseTokenName ?? "Unknown token"} ${symbol}`.trim();
+  const matched = Array.isArray(candidate.matchedTerms) && candidate.matchedTerms[0]
+    ? `<span class="tag">matched ${escapeHtml(candidate.matchedTerms[0])}</span>`
+    : "";
+
+  card.innerHTML = `
+    <div class="coin-card-top">
+      <div>
+        <h4>${escapeHtml(title)}</h4>
+        <span>${escapeHtml(candidate.chainId)} / ${escapeHtml(candidate.dexId)}</span>
+      </div>
+      <div class="${scoreClass(candidate.matchScore)}">${escapeHtml(candidate.matchScore)}</div>
+    </div>
+    <div class="tag-row compact">
+      <span class="tag">liq ${escapeHtml(formatUsd(candidate.liquidityUsd))}</span>
+      <span class="tag">24h ${escapeHtml(formatUsd(candidate.volume24hUsd))}</span>
+      <span class="tag">fdv ${escapeHtml(formatUsd(candidate.fdv))}</span>
+      ${matched}
+      ${renderRiskFlags(candidate.riskFlags)}
+    </div>
+    <a class="text-link" href="${escapeHtml(candidate.url)}" target="_blank" rel="noreferrer">Open DexScreener</a>
+  `;
+  return card;
+}
+
+function renderDexDiscoveries(candidates, signals) {
   elements.dexCount.textContent = String(candidates.length);
-  elements.dexStateLabel.textContent = candidates.length ? "Stored token matches" : "No stored token matches";
+  const groups = groupDexDiscoveriesByNews(candidates, signals);
+  elements.dexStateLabel.textContent = groups.length ? `${groups.length} news groups` : "No token matches";
 
   if (candidates.length === 0) {
     setState(elements.dexState, "Empty");
@@ -361,39 +423,28 @@ function renderDexDiscoveries(candidates) {
     return;
   }
 
-  setState(elements.dexState, `${candidates.length} rows`, "good");
+  setState(elements.dexState, `${groups.length} news`, "good");
   elements.dexList.replaceChildren(
-    ...candidates.map((candidate) => {
-      const card = document.createElement("article");
-      card.className = "signal-card dex-card";
-      const symbol = candidate.baseTokenSymbol ? `$${candidate.baseTokenSymbol}` : "";
-      const title = `${candidate.baseTokenName ?? "Unknown token"} ${symbol}`.trim();
-      const matched = Array.isArray(candidate.matchedTerms) && candidate.matchedTerms[0]
-        ? `<span class="tag">matched ${escapeHtml(candidate.matchedTerms[0])}</span>`
-        : "";
-      card.innerHTML = `
-        <div class="${scoreClass(candidate.matchScore)}">${escapeHtml(candidate.matchScore)}</div>
-        <div>
-          <div class="row-heading">
-            <h3>${escapeHtml(title)}</h3>
-            <div class="link-row">
-              <a class="text-link" href="${escapeHtml(candidate.url)}" target="_blank" rel="noreferrer">DexScreener</a>
-              <a class="text-link" href="${xPostUrl(candidate.postId)}" target="_blank" rel="noreferrer">Open on X</a>
+    ...groups.map((group) => {
+      const section = document.createElement("article");
+      section.className = "dex-news-group";
+      section.innerHTML = `
+        <div class="dex-news-heading">
+          <div>
+            <div class="tag-row compact">
+              <span class="tag action">${escapeHtml(group.candidates.length)} possible coins</span>
+              ${group.signalScore === null ? "" : `<span class="tag">signal ${escapeHtml(group.signalScore)}</span>`}
             </div>
+            <h3>${escapeHtml(group.title)}</h3>
+            <p>${escapeHtml(group.narrative)}</p>
           </div>
-          <p>${escapeHtml(candidate.narrative || candidate.whySignal || "Matched from a stored narrative signal.")}</p>
-          <div class="tag-row">
-            <span class="tag action">${escapeHtml(candidate.chainId)}</span>
-            <span class="tag">${escapeHtml(candidate.dexId)}</span>
-            <span class="tag">liq ${escapeHtml(formatUsd(candidate.liquidityUsd))}</span>
-            <span class="tag">24h ${escapeHtml(formatUsd(candidate.volume24hUsd))}</span>
-            <span class="tag">fdv ${escapeHtml(formatUsd(candidate.fdv))}</span>
-            ${matched}
-            ${renderRiskFlags(candidate.riskFlags)}
-          </div>
+          <a class="text-link" href="${xPostUrl(group.postId)}" target="_blank" rel="noreferrer">Open news</a>
         </div>
+        <div class="coin-grid"></div>
       `;
-      return card;
+      const grid = section.querySelector(".coin-grid");
+      grid.replaceChildren(...group.candidates.slice(0, 6).map(renderDexCoinCard));
+      return section;
     })
   );
 }
@@ -470,7 +521,7 @@ async function refresh() {
     renderHealth(health);
     renderLatestPost(latestPost, latestAnalysis);
     renderSignals(signals);
-    renderDexDiscoveries(dexDiscoveries);
+    renderDexDiscoveries(dexDiscoveries, signals);
     renderAnalyses(analyses);
     elements.lastUpdated.textContent = `Updated ${formatRelative(new Date().toISOString())}`;
   } catch (error) {

@@ -311,6 +311,8 @@ select:focus {
 }
 
 .signal-card,
+.dex-news-group,
+.coin-card,
 .analysis-row,
 .empty {
   border: 1px solid var(--line);
@@ -370,11 +372,81 @@ select:focus {
   overflow-wrap: anywhere;
 }
 
+.dex-news-group {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+}
+
+.dex-news-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.dex-news-heading h3,
+.coin-card h4 {
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.dex-news-heading h3 {
+  margin-top: 10px;
+  font-size: 24px;
+}
+
+.dex-news-heading p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.coin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.coin-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.36);
+}
+
+.coin-card-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.coin-card h4 {
+  overflow-wrap: anywhere;
+  font-size: 18px;
+}
+
+.coin-card span {
+  color: var(--muted);
+  font: 700 12px/1.4 "JetBrains Mono", monospace;
+}
+
+.coin-card .score {
+  width: 48px;
+  height: 48px;
+  font-size: 15px;
+}
+
 .tag-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 14px;
+}
+
+.tag-row.compact {
+  margin-top: 0;
 }
 
 .tag {
@@ -434,6 +506,7 @@ select:focus {
   }
 
   .hero,
+  .dex-news-heading,
   .panel-heading,
   .analysis-row {
     display: grid;
@@ -445,6 +518,10 @@ select:focus {
   }
 
   .signal-card {
+    grid-template-columns: 1fr;
+  }
+
+  .coin-grid {
     grid-template-columns: 1fr;
   }
 
